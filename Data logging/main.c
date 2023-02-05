@@ -33,7 +33,7 @@
 #define LIS3DH_OUT_X_L 0x28
 #define BUFFER_SIZE     512
 #define NB_AXES         3
-#define CLASS_NUMBER	2
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -129,34 +129,36 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-	buf[0] = LIS3DH_OUT_X_L | 0x80;
+	  /* Getting fresh accelerometer data */
+	  buf[0] = LIS3DH_OUT_X_L | 0x80;
+	  for (uint16_t i = 0; i < BUFFER_SIZE; i++) {
+		  if (HAL_I2C_IsDeviceReady(&hi2c1, LIS3DH_V_CHIP_ADDR, 3, 100) == 0) { // New data is available
+			  buf[0] = LIS3DH_OUT_X_L | 0x80;
+			  HAL_I2C_Master_Transmit(&hi2c1, LIS3DH_V_CHIP_ADDR, buf, 1, HAL_MAX_DELAY);
+			  HAL_I2C_Master_Receive(&hi2c1, LIS3DH_V_CHIP_ADDR, buf, 6, HAL_MAX_DELAY);
+			  x = buf[1] << 8 | buf[0];
+			  y = buf[3] << 8 | buf[2];
+			  z = buf[5] << 8 | buf[4];
+			  acc_buffer[NB_AXES * i] = x;
+			  acc_buffer[(NB_AXES * i) + 1] = y;
+			  acc_buffer[(NB_AXES * i) + 2] = z;
+		  } else {
+			  i--; // New data not ready
+		  }
+	  }
 
-	for (uint16_t i = 0; i < BUFFER_SIZE; i++) {
-		if (HAL_I2C_IsDeviceReady(&hi2c1, LIS3DH_V_CHIP_ADDR, 3, 100) == 0) { // New data is available
-			buf[0] = LIS3DH_OUT_X_L | 0x80;
-	  		HAL_I2C_Master_Transmit(&hi2c1, LIS3DH_V_CHIP_ADDR, buf, 1, HAL_MAX_DELAY);
-	  	 	HAL_I2C_Master_Receive(&hi2c1, LIS3DH_V_CHIP_ADDR, buf, 6, HAL_MAX_DELAY);
-	  	    x = buf[1] << 8 | buf[0];
-	  	    y = buf[3] << 8 | buf[2];
-	  	    z = buf[5] << 8 | buf[4];
-	  	    acc_buffer[NB_AXES * i] = x;
-	  	    acc_buffer[(NB_AXES * i) + 1] = y;
-	  	    acc_buffer[(NB_AXES * i) + 2] = z;
-		} else {
-			i--; // New data not ready
-			}
-	}
+	  /* Printing values to serial one line at a time */
+	  for (uint16_t isample = 0; isample < NB_AXES * BUFFER_SIZE - 1; isample++) {
+		  sprintf((char*)buf, "%.4f ", acc_buffer[isample]);
+		  HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
+	  }
+	  sprintf((char*)buf, "%.4f\n", acc_buffer[NB_AXES * BUFFER_SIZE] -1);
+	  HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
 
-	for (uint16_t isample = 0; isample < NB_AXES * BUFFER_SIZE - 1; isample++) {
-		sprintf((char*)buf, "%.4f ", acc_buffer[isample]);
-	  	HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
-	}
+	  //HAL_Delay(100);
 
-	sprintf((char*)buf, "%.4f\n", acc_buffer[NB_AXES * BUFFER_SIZE] -1);
-	HAL_UART_Transmit(&huart2, buf, strlen((char*)buf), HAL_MAX_DELAY);
+	  /* USER CODE END WHILE */
 
-	//HAL_Delay(100);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
