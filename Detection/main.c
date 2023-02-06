@@ -70,6 +70,7 @@ static void MX_I2C1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 uint8_t buf[32];
+uint8_t buf2[64];
 float x = 0;
 float y = 0;
 float z = 0;
@@ -170,8 +171,8 @@ int main(void)
 	  neai_classification(acc_buffer, output_class_buffer, &id_class);
 
 	  /* Print the result to the serial */
-	  sprintf((char*)buff, "Class detected: %s (Certainty: %d%%)\n", id2class[id_class], (uint16_t) (output_class_buffer[id_class - 1] * 100));
-	  HAL_UART_Transmit(&huart2, buff, strlen((char*)buff), HAL_MAX_DELAY);
+	  sprintf((char*)buf2, "Class detected: %s (Certainty: %d%%)\n", id2class[id_class], (uint16_t) (output_class_buffer[id_class - 1] * 100));
+	  HAL_UART_Transmit(&huart2, buf2, strlen((char*)buf2), HAL_MAX_DELAY);
 	  // Name of the class and the associated probability %
 
 	  HAL_Delay(10);
